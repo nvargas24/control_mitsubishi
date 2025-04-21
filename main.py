@@ -63,8 +63,22 @@ def search_serie(df, num_serie):
 
     return df_filter
 
+def filter_by_type(df, type):
+    df_filter = df.copy()
+
+    df_filter = df_filter[df_filter["Unidad en falla"] == type]
+
+    if type=='BCH':
+        df_filter = df_filter.drop(['IGD5 U', 'IGD5 V', 'IGD5 W', 'IGU', 'IGV', 'IGW', 'IGX', 'IGY', 'IGZ'], axis=1)
+    elif type=='PWU':
+        df_filter = df_filter.drop(['IGBI 1', 'IGB1 2', 'IGB1', 'IGB2', 'DB1', 'DB2'], axis=1)
+
+    return df_filter
+   
 
 if __name__ == "__main__":
     df = extract_xlsx()
-    df = search_serie(df, "DA30765")
+    df = filter_by_type(df, "BCH")
+    #df = search_serie(df, "DA30765")
     print(df)
+    print(df.info())
