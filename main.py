@@ -5,6 +5,8 @@ import pandas as pd
 from dotenv import load_dotenv
 import os
 
+list_components_bch = ['IGBI 1', 'IGB1 2', 'IGB1', 'IGB2', 'DB1', 'DB2']
+list_components_pwu = ['IGD5 U', 'IGD5 V', 'IGD5 W', 'IGU', 'IGV', 'IGW', 'IGX', 'IGY', 'IGZ']
 def extract_xlsx():
     # Extraccion de URL del archivo xlsx desde un .env
     load_dotenv('urls_sarmiento.env')
@@ -67,18 +69,47 @@ def filter_by_type(df, type):
     df_filter = df.copy()
 
     df_filter = df_filter[df_filter["Unidad en falla"] == type]
+    #df_filter = df_filter.drop("Unidad en falla", axis=1)
 
     if type=='BCH':
-        df_filter = df_filter.drop(['IGD5 U', 'IGD5 V', 'IGD5 W', 'IGU', 'IGV', 'IGW', 'IGX', 'IGY', 'IGZ'], axis=1)
+        df_filter = df_filter.drop(list_components_pwu, axis=1)
     elif type=='PWU':
-        df_filter = df_filter.drop(['IGBI 1', 'IGB1 2', 'IGB1', 'IGB2', 'DB1', 'DB2'], axis=1)
+        df_filter = df_filter.drop(list_components_bch, axis=1)
 
     return df_filter
-   
+
+def segment_components(register):
+    valores_validos = ['x', 'xp', 'p']
+    components = ""
+    
+    print(register)
+
+    if register["Unidad en falla"] == "BCH":
+        list_components = list_components_bch
+    elif register["Unidad en falla"] == "PWU":
+        list_components = list_components_pwu 
+
+    for col in df.columns:
+        row = str(register[col]).strip().lower()
+
+        if row in valores_validos and col in list_components:
+           components = components + ", "+ f"{col}" 
+
+    print(components)
+    components = components.strip(", ")
+
+    if components:
+        return components
+    else:
+        return "Sin registro"
 
 if __name__ == "__main__":
     df = extract_xlsx()
     df = filter_by_type(df, "BCH")
     #df = search_serie(df, "DA30765")
+    print(df)
+    print(df.info())
+
+    df['componentes_reemplazados(serigrafia)'] = df.apply(segment_components, axis=1)
     print(df)
     print(df.info())
