@@ -5,7 +5,7 @@ import pandas as pd
 from dotenv import load_dotenv
 import os
 
-list_components_bch = ['IGBI 1', 'IGB1 2', 'IGB1', 'IGB2', 'DB1', 'DB2']
+list_components_bch = ['IGB1 1', 'IGB1 2', 'IGB1', 'IGB2', 'DB1', 'DB2']
 list_components_pwu = ['IGD5 U', 'IGD5 V', 'IGD5 W', 'IGU', 'IGV', 'IGW', 'IGX', 'IGY', 'IGZ']
 def extract_xlsx():
     # Extraccion de URL del archivo xlsx desde un .env
@@ -80,9 +80,8 @@ def filter_by_type(df, type):
 
 def segment_components(register):
     valores_validos = ['x', 'xp', 'p']
+    list_components = []
     components = ""
-    
-    print(register)
 
     if register["Unidad en falla"] == "BCH":
         list_components = list_components_bch
@@ -95,7 +94,6 @@ def segment_components(register):
         if row in valores_validos and col in list_components:
            components = components + ", "+ f"{col}" 
 
-    print(components)
     components = components.strip(", ")
 
     if components:
@@ -105,11 +103,9 @@ def segment_components(register):
 
 if __name__ == "__main__":
     df = extract_xlsx()
-    df = filter_by_type(df, "BCH")
+    #df = filter_by_type(df, "BCH")
     #df = search_serie(df, "DA30765")
-    print(df)
-    print(df.info())
-
-    df['componentes_reemplazados(serigrafia)'] = df.apply(segment_components, axis=1)
+    df['componentes_reemplazados'] = df.apply(segment_components, axis=1)
+    df = df.drop(list_components_pwu + list_components_bch, axis=1)
     print(df)
     print(df.info())
