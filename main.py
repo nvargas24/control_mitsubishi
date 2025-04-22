@@ -195,6 +195,18 @@ def filter_re_code(text):
         return "Sin registro"
 
 
+def view_serie(df, min_reg=0):
+    df_serie = df.copy()
+
+    for _, n_serie in df_serie['Número de serie'].items():
+        df_serie = search_serie(df, f"{n_serie}")
+        num_reg = df_serie.shape[0]
+
+        if min_reg and num_reg > min_reg:
+            print(df_serie)
+        elif min_reg == 0:
+            print(df_serie)
+
 if __name__ == "__main__":
     df = extract_xlsx()
     df = df.fillna("Sin registro")
@@ -213,12 +225,7 @@ if __name__ == "__main__":
     print(df)
     print(df.info())
 
-    #df_serie = search_serie(df, "DA30578")
-    #print(df_serie)
-
-    for _, n_serie in df['Número de serie'].items():
-        df_serie = search_serie(df, f"{n_serie}")
-        print(df_serie)
+    view_serie(df, min_reg=3)
 
     # Guardar el DataFrame en un archivo CSV
     output_file = os.path.join(url_desktop, "output_data.csv")
