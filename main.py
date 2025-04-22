@@ -4,6 +4,7 @@ from openpyxl.utils import coordinate_to_tuple
 import pandas as pd
 from dotenv import load_dotenv
 import os
+import re
 
 load_dotenv('urls_sarmiento.env')
 url_file_mit = os.getenv("URL_MITSUBISHI")
@@ -61,10 +62,32 @@ def extract_xlsx():
 
     return df_clean
 
+def calculate_time_between_failures(df):
+    # Calcular la diferencia en días entre fechas consecutivas
+    df['Tiempo entre fallas (días)'] = df['Fecha de falla'].diff().dt.days
+    # Reemplazar NaN (primer registro) con 0
+    df['Tiempo entre fallas (días)'] = df['Tiempo entre fallas (días)'].fillna(0).astype(int)
+
+    return df
+
 def search_serie(df, num_serie):
     df_filter = df.copy()
 
     df_filter = df_filter[df_filter["Número de serie"] == num_serie]
+
+    # Identifico modulo segun numero de serie solicitado
+    if not df_filter.empty:
+        modulo = df_filter.iloc[0]['Unidad en falla']
+    else:
+        print(f"No se encontró el número de serie: {num_serie}")
+
+    # Borra columnas no relevantes
+    df_filter = df_filter.drop(['Número de serie', 'Unidad en falla','UBICACIÓN ACTUAL', 'GPS', 'componentes_reemplazados'], axis=1)
+
+    # Calculo de lapso de tiempo entre ingresos
+    df_filter = calculate_time_between_failures(df_filter)
+
+    print(f" ********************** Equipo {modulo} - {num_serie} ****************************")
 
     return df_filter
 
@@ -137,8 +160,6 @@ def used_components(register):
     # Determinar lista de componentes según la unidad en falla
     list_components = []
 
-    print(register["Unidad en falla"])
-
     if register["Unidad en falla"].strip() == "BCH":
         list_components = list_components_bch
 
@@ -162,25 +183,42 @@ def used_components(register):
 
     return counts
 
+def filter_re_code(text):
+    """
+    Filtra textos que contengan la estructura 'RE****'.
+    Si no se encuentra, devuelve 'Sin registro'.
+    """
+    match = re.search(r'\bRE\d{4}\b', text)
+    if match:
+        return match.group(0)
+    else:
+        return "Sin registro"
+
+
 if __name__ == "__main__":
     df = extract_xlsx()
     df = df.fillna("Sin registro")
     #df = filter_by_type(df, "BCH")
 
-    # Crear columnas de cuentas basadas en used_components
+    # Componentes utilizados
     counts_df = df.apply(used_components, axis=1, result_type="expand")
     df = pd.concat([df, counts_df], axis=1)
-
+    # Serigrafia de componentes en equipo
     df['componentes_reemplazados'] = df.apply(segment_components, axis=1)
-    #df = search_serie(df, "DA30765")
+    # Filtrado de Num RE de equipos
+    df['Cod_Rep'] = df['UBICACIÓN ACTUAL'].apply(filter_re_code)
+    
+
     df = df.drop(list_components_pwu + list_components_bch, axis=1)
     print(df)
     print(df.info())
 
-    """
+    df_serie = search_serie(df, "DA30723")
+    print(df_serie)
+
     # Guardar el DataFrame en un archivo CSV
     output_file = os.path.join(url_desktop, "output_data.csv")
-    df.to_csv(output_file, index=False, encoding="utf-8-sig")
+    df.to_csv(output_file, index=False, encoding="utf-8-sig", sep=";")
     
     print(f"Archivo CSV creado: {output_file}")
-    """
+    
