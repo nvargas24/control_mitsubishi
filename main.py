@@ -5,12 +5,15 @@ import pandas as pd
 from dotenv import load_dotenv
 import os
 
+load_dotenv('urls_sarmiento.env')
+url_file_mit = os.getenv("URL_MITSUBISHI")
+url_desktop = os.getenv("URL_DESKTOP")
+
 list_components_bch = ['IGB1 1', 'IGB1 2', 'IGB1', 'IGB2', 'DB1', 'DB2']
 list_components_pwu = ['IGD5 U', 'IGD5 V', 'IGD5 W', 'IGU', 'IGV', 'IGW', 'IGX', 'IGY', 'IGZ']
+
 def extract_xlsx():
     # Extraccion de URL del archivo xlsx desde un .env
-    load_dotenv('urls_sarmiento.env')
-    url_file_mit = os.getenv("URL_MITSUBISHI")
     URL = os.path.join(url_file_mit, "FALLAS VVVF MITSUBISHI 20240129_V1.0.xlsx")
 
     # Carga de archivo xlsx
@@ -83,9 +86,9 @@ def segment_components(register):
     list_components = []
     components = ""
 
-    if register["Unidad en falla"] == "BCH":
+    if register["Unidad en falla"].strip() == "BCH":
         list_components = list_components_bch
-    elif register["Unidad en falla"] == "PWU":
+    elif register["Unidad en falla"].strip() == "PWU":
         list_components = list_components_pwu 
 
     for col in df.columns:
@@ -133,13 +136,18 @@ def used_components(register):
 
     # Determinar lista de componentes según la unidad en falla
     list_components = []
-    if register["Unidad en falla"] == "BCH":
+
+    print(register["Unidad en falla"])
+
+    if register["Unidad en falla"].strip() == "BCH":
         list_components = list_components_bch
-    elif register["Unidad en falla"] == "PWU":
+
+    elif register["Unidad en falla"].strip() == "PWU":
         list_components = list_components_pwu
 
     # Contar componentes válidos
     valores_validos = ['x', 'xp']
+    
     for col in list_components:
         row = str(register[col]).strip().lower()
         if col in component_mapping:
@@ -163,10 +171,16 @@ if __name__ == "__main__":
     counts_df = df.apply(used_components, axis=1, result_type="expand")
     df = pd.concat([df, counts_df], axis=1)
 
-
     df['componentes_reemplazados'] = df.apply(segment_components, axis=1)
     #df = search_serie(df, "DA30765")
     df = df.drop(list_components_pwu + list_components_bch, axis=1)
     print(df)
     print(df.info())
 
+    """
+    # Guardar el DataFrame en un archivo CSV
+    output_file = os.path.join(url_desktop, "output_data.csv")
+    df.to_csv(output_file, index=False, encoding="utf-8-sig")
+    
+    print(f"Archivo CSV creado: {output_file}")
+    """
