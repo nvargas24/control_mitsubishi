@@ -101,11 +101,72 @@ def segment_components(register):
     else:
         return "Sin registro"
 
+
+def used_components(register):
+    # Inicializar contadores
+    counts = {
+        "IGBT": 0,
+        "Diodo": 0,
+        "Resistores": 0,
+        "1N4746": 0,
+        "Placa de control": 0
+    }
+
+    # Mapear columnas a sus categorías
+    component_mapping = {
+        'IGB1 1': "Placa de control",
+        'IGB1 2': "Placa de control",
+        'IGB1': "IGBT",
+        'IGB2': "IGBT",
+        'DB1': "Diodo",
+        'DB2': "Diodo",
+        'IGD5 U': "Placa de control",
+        'IGD5 V': "Placa de control",
+        'IGD5 W': "Placa de control",
+        'IGU': "IGBT",
+        'IGV': "IGBT",
+        'IGW': "IGBT",
+        'IGX': "IGBT",
+        'IGY': "IGBT",
+        'IGZ': "IGBT"
+    }
+
+    # Determinar lista de componentes según la unidad en falla
+    list_components = []
+    if register["Unidad en falla"] == "BCH":
+        list_components = list_components_bch
+    elif register["Unidad en falla"] == "PWU":
+        list_components = list_components_pwu
+
+    # Contar componentes válidos
+    valores_validos = ['x', 'xp']
+    for col in list_components:
+        row = str(register[col]).strip().lower()
+        if col in component_mapping:
+            # Suma de componentes segun encabezado
+            if row in valores_validos:
+                category = component_mapping[col]
+                counts[category] += 1
+            # Suma de componentes no especificado por encabezado
+            if row=='xp' or row=='p':
+                counts["1N4746"] += 2
+                counts["Resistores"] += 1
+
+    return counts
+
 if __name__ == "__main__":
     df = extract_xlsx()
+    df = df.fillna("Sin registro")
     #df = filter_by_type(df, "BCH")
-    #df = search_serie(df, "DA30765")
+
+    # Crear columnas de cuentas basadas en used_components
+    counts_df = df.apply(used_components, axis=1, result_type="expand")
+    df = pd.concat([df, counts_df], axis=1)
+
+
     df['componentes_reemplazados'] = df.apply(segment_components, axis=1)
+    #df = search_serie(df, "DA30765")
     df = df.drop(list_components_pwu + list_components_bch, axis=1)
     print(df)
     print(df.info())
+
