@@ -87,7 +87,7 @@ def search_serie(df, num_serie):
     # Calculo de lapso de tiempo entre ingresos
     df_filter = calculate_time_between_failures(df_filter)
 
-    print(f" ********************** Equipo {modulo} - {num_serie} ****************************")
+    print(f"\n ********************** Equipo {modulo} - {num_serie} ****************************")
 
     return df_filter
 
@@ -213,8 +213,12 @@ if __name__ == "__main__":
     print(df)
     print(df.info())
 
-    df_serie = search_serie(df, "DA30723")
-    print(df_serie)
+    #df_serie = search_serie(df, "DA30578")
+    #print(df_serie)
+
+    for _, n_serie in df['Número de serie'].items():
+        df_serie = search_serie(df, f"{n_serie}")
+        print(df_serie)
 
     # Guardar el DataFrame en un archivo CSV
     output_file = os.path.join(url_desktop, "output_data.csv")
