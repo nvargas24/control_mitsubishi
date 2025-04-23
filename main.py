@@ -193,26 +193,26 @@ def filter_re_code(text):
         return "Sin registro"
 
 
-def view_serie(df, min_reg=0):
+def view_serie(df, cant_reg=0):
     df_serie = df.copy()
 
-    list_serie = []
+    list_cant_sup_reg = []
 
     for n_serie in df_serie['Número de serie'].unique():
         df_serie, modulo = search_serie(df, f"{n_serie}")
         num_reg = df_serie.shape[0]
-        print(f"num: {num_reg}, n_serie: {n_serie}")
-        print(f"\n ********************** Equipo {modulo} - {n_serie} ****************************")
-        print(df_serie)
-        list_serie.append(n_serie)
-        #if min_reg and num_reg > min_reg:
-        #    list_serie.append(n_serie)
-        #    print(df_serie)
-        #elif min_reg == 0:
-        #    print(df_serie)
+        if num_reg == cant_reg:
+            print(f"\n ********************** Equipo {modulo} - {n_serie} ****************************")
+            print(df_serie)
 
+        if num_reg > cant_reg:
+            list_cant_sup_reg.append(n_serie)
 
-    print(list_serie)
+    if list_cant_sup_reg:
+        str_sup_reg = ", ".join(list_cant_sup_reg)
+
+        print(f" *****  ADV: Hay modulos con un numero mayor de {cant_reg} registro/s:")
+        print(f" *****  {str_sup_reg}")
 
 def strip_columns(df):
     """
@@ -242,7 +242,7 @@ if __name__ == "__main__":
     print(df)
     print(df.info())
 
-    view_serie(df, min_reg=3)
+    view_serie(df, cant_reg=3)
 
     # Guardar el DataFrame en un archivo CSV
     output_file = os.path.join(url_desktop, "output_data.csv")
