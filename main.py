@@ -75,21 +75,32 @@ def calculate_time_between_failures(df):
 def search_serie(df, num_serie):
     df_filter = df.copy()
 
-    df_filter = df_filter[df_filter["Número de serie"] == num_serie]
+    try:
+        df_filter = df_filter[df_filter["Número de serie"] == num_serie]
 
-    # Identifico modulo segun numero de serie solicitado
-    if not df_filter.empty:
-        modulo = df_filter.iloc[0]['Unidad en falla']
-    else:
-        print(f"No se encontró el número de serie: {num_serie}")
+        # Identifico modulo segun numero de serie solicitado
+        if not df_filter.empty:
+            modulo = df_filter.iloc[0]['Unidad en falla']
+        else:
+            raise ValueError(f"No se encontró el número de serie: {num_serie}")
 
-    # Borra columnas no relevantes
-    df_filter = df_filter.drop(['Número de serie', 'Unidad en falla','UBICACIÓN ACTUAL', 'GPS', 'componentes_reemplazados'], axis=1)
+        # Borra columnas no relevantes
+        df_filter = df_filter.drop(['Número de serie', 'Unidad en falla','UBICACIÓN ACTUAL', 'GPS', 'componentes_reemplazados'], axis=1)
 
-    # Calculo de lapso de tiempo entre ingresos
-    df_filter = calculate_time_between_failures(df_filter)
+        # Calculo de lapso de tiempo entre ingresos
+        df_filter = calculate_time_between_failures(df_filter)
 
-    return df_filter, modulo
+        return df_filter, modulo
+
+    except ValueError as ve:
+        print(ve)
+        return pd.DataFrame(), None  # Retorna un DataFrame vacío y `None` como módulo
+    except KeyError as ke:
+        print(f"Error: Falta una columna esperada en el DataFrame: {ke}")
+        return pd.DataFrame(), None
+    except Exception as e:
+        print(f"Error inesperado: {e}")
+        return pd.DataFrame(), None
 
 def filter_by_type(df, type):
     df_filter = df.copy()
