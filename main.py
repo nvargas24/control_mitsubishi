@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 import os
 import re
 
+import questionary
+
 load_dotenv('urls_sarmiento.env')
 url_file_mit = os.getenv("URL_MITSUBISHI")
 url_desktop = os.getenv("URL_DESKTOP")
@@ -254,6 +256,45 @@ def strip_columns(df):
             df[col] = df[col].apply(lambda x: x.strip() if isinstance(x, str) else x)
     return df
 
+
+def menu(df):
+    """
+    Menú interactivo para ejecutar funciones con parámetros solicitados al usuario.
+    """
+    while True:
+        # Mostrar el menú principal
+        opcion = questionary.select(
+            "Selecciona una opción:",
+            choices=[
+                "1. Filtrar por cantidad de registros (view_serie)",
+                "2. Filtrar por número de serie (view_modulo)",
+                "3. Salir"
+            ]
+        ).ask()
+
+        if opcion == "1. Filtrar por cantidad de registros (view_serie)":
+            # Solicitar el parámetro `cant_reg` al usuario
+            cant_reg = questionary.text("Ingrese la cantidad mínima de registros:").ask()
+            try:
+                cant_reg = int(cant_reg)
+                view_serie(df, cant_reg=cant_reg)
+            except ValueError:
+                print("Por favor, ingrese un número válido.")
+
+        elif opcion == "2. Filtrar por número de serie (view_modulo)":
+            # Solicitar el parámetro `n_serie` al usuario
+            n_serie = questionary.text("Ingrese el número de serie:").ask()
+            view_modulo(df, n_serie=n_serie)
+
+        elif opcion == "3. Salir":
+            print("Saliendo del programa...")
+            break
+
+        else:
+            print("Opción no válida. Por favor, selecciona una opción válida.")
+
+
+
 if __name__ == "__main__":
     
     # Ingesta de datos y pre-procesamiento
@@ -265,9 +306,12 @@ if __name__ == "__main__":
     df = enrich_dataframe(df)
     # Elimina columnas innecesarias
     df = df.drop(list_components_pwu + list_components_bch, axis=1)
+    
+    menu(df)
 
+    """
     # Datos relevantes a cargar por usuario
-    cant_reg_of_dfs = 1
+    cant_reg_of_dfs = 3
     name_modulo = "DA30664"
     name_csv = f"Informe_de_filtrado_Mitsubishi"
 
@@ -276,6 +320,8 @@ if __name__ == "__main__":
     view_modulo(df, name_modulo)
 
     # Guardar el DataFrame en un archivo CSV
-    export_to_csv(df, name=name_csv)
+    export_to_csv(df, name=name_csv)   
+    """
+
 
     
