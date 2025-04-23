@@ -87,9 +87,7 @@ def search_serie(df, num_serie):
     # Calculo de lapso de tiempo entre ingresos
     df_filter = calculate_time_between_failures(df_filter)
 
-    print(f"\n ********************** Equipo {modulo} - {num_serie} ****************************")
-
-    return df_filter
+    return df_filter, modulo
 
 def filter_by_type(df, type):
     df_filter = df.copy()
@@ -198,14 +196,32 @@ def filter_re_code(text):
 def view_serie(df, min_reg=0):
     df_serie = df.copy()
 
-    for _, n_serie in df_serie['Número de serie'].items():
-        df_serie = search_serie(df, f"{n_serie}")
-        num_reg = df_serie.shape[0]
+    list_serie = []
 
-        if min_reg and num_reg > min_reg:
-            print(df_serie)
-        elif min_reg == 0:
-            print(df_serie)
+    for n_serie in df_serie['Número de serie'].unique():
+        df_serie, modulo = search_serie(df, f"{n_serie}")
+        num_reg = df_serie.shape[0]
+        print(f"num: {num_reg}, n_serie: {n_serie}")
+        print(f"\n ********************** Equipo {modulo} - {n_serie} ****************************")
+        print(df_serie)
+        list_serie.append(n_serie)
+        #if min_reg and num_reg > min_reg:
+        #    list_serie.append(n_serie)
+        #    print(df_serie)
+        #elif min_reg == 0:
+        #    print(df_serie)
+
+
+    print(list_serie)
+
+def strip_columns(df):
+    """
+    Aplica .strip() a todas las celdas de texto en cada columna del DataFrame.
+    """
+    for col in df.columns:
+        if df[col].dtype == 'object':  # Verifica si la columna contiene texto
+            df[col] = df[col].apply(lambda x: x.strip() if isinstance(x, str) else x)
+    return df
 
 if __name__ == "__main__":
     df = extract_xlsx()
@@ -219,9 +235,10 @@ if __name__ == "__main__":
     df['componentes_reemplazados'] = df.apply(segment_components, axis=1)
     # Filtrado de Num RE de equipos
     df['Cod_Rep'] = df['UBICACIÓN ACTUAL'].apply(filter_re_code)
-    
-
+    # Elimina columnas innecesarias
     df = df.drop(list_components_pwu + list_components_bch, axis=1)
+    df = strip_columns(df)
+
     print(df)
     print(df.info())
 
