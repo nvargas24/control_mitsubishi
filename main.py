@@ -192,6 +192,16 @@ def filter_re_code(text):
     else:
         return "Sin registro"
 
+def enrich_dataframe(df):
+    # Componentes utilizados
+    counts_df = df.apply(used_components, axis=1, result_type="expand")
+    df = pd.concat([df, counts_df], axis=1)
+    # Serigrafia de componentes en equipo
+    df['componentes_reemplazados'] = df.apply(segment_components, axis=1)
+    # Filtrado de Num RE de equipos
+    df['Cod_Rep'] = df['UBICACIÓN ACTUAL'].apply(filter_re_code)
+
+    return df
 
 def view_serie(df, cant_reg=0):
     df_serie = df.copy()
@@ -214,6 +224,27 @@ def view_serie(df, cant_reg=0):
         print(f" *****  ADV: Hay modulos con un numero mayor de {cant_reg} registro/s:")
         print(f" *****  {str_sup_reg}")
 
+def view_modulo(df, n_serie):
+    df_serie = df.copy()
+
+    df_serie, modulo = search_serie(df, f"{n_serie}")
+
+    print(f"\n ********************** Equipo {modulo} - {n_serie} ****************************")
+    print(df_serie)
+
+def export_to_csv(df, name="output_data"):
+    """
+    Crea archivo csv en escritorio segun df recibido
+    """
+    output_file = os.path.join(url_desktop, f"{name}.csv")
+    try:
+        df.to_csv(output_file, index=False, encoding="utf-8-sig", sep=";")
+        print(f"Archivo CSV creado: ./{name}.csv")
+    except PermissionError:
+        print(f"Error: No se pudo guardar el archivo '{name}.csv'. Verifica que no esté abierto en otro programa.")
+    except Exception as e:
+        print(f"Error inesperado al guardar el archivo: {e}")
+
 def strip_columns(df):
     """
     Aplica .strip() a todas las celdas de texto en cada columna del DataFrame.
@@ -224,29 +255,27 @@ def strip_columns(df):
     return df
 
 if __name__ == "__main__":
+    
+    # Ingesta de datos y pre-procesamiento
     df = extract_xlsx()
+    df = strip_columns(df)  
+    # Transformacion datos nulos
     df = df.fillna("Sin registro")
-    #df = filter_by_type(df, "BCH")
-
-    # Componentes utilizados
-    counts_df = df.apply(used_components, axis=1, result_type="expand")
-    df = pd.concat([df, counts_df], axis=1)
-    # Serigrafia de componentes en equipo
-    df['componentes_reemplazados'] = df.apply(segment_components, axis=1)
-    # Filtrado de Num RE de equipos
-    df['Cod_Rep'] = df['UBICACIÓN ACTUAL'].apply(filter_re_code)
+    # Filtrado y extraccion de datos relevantes
+    df = enrich_dataframe(df)
     # Elimina columnas innecesarias
     df = df.drop(list_components_pwu + list_components_bch, axis=1)
-    df = strip_columns(df)
 
-    print(df)
-    print(df.info())
+    # Datos relevantes a cargar por usuario
+    cant_reg_of_dfs = 1
+    name_modulo = "DA30664"
+    name_csv = f"Informe_de_filtrado_Mitsubishi"
 
-    view_serie(df, cant_reg=3)
+    # Testeo de dfs
+    view_serie(df, cant_reg= cant_reg_of_dfs)
+    view_modulo(df, name_modulo)
 
     # Guardar el DataFrame en un archivo CSV
-    output_file = os.path.join(url_desktop, "output_data.csv")
-    df.to_csv(output_file, index=False, encoding="utf-8-sig", sep=";")
-    
-    print(f"Archivo CSV creado: {output_file}")
+    export_to_csv(df, name=name_csv)
+
     
