@@ -138,7 +138,6 @@ def segment_components(register):
     else:
         return "Sin registro"
 
-
 def used_components(register):
     # Inicializar contadores
     counts = {
@@ -220,16 +219,32 @@ def view_serie(df, cant_reg=0):
     df_serie = df.copy()
 
     list_cant_sup_reg = []
+    num_reg_max = 0
 
     for n_serie in df_serie['Número de serie'].unique():
-        df_serie, modulo = search_serie(df, f"{n_serie}")
-        num_reg = df_serie.shape[0]
-        if num_reg == cant_reg:
-            print(f"\n ********************** Equipo {modulo} - {n_serie} ****************************")
-            print(df_serie)
+        try:
+            df_filtered, modulo = search_serie(df_serie, f"{n_serie}")
+            
+            # Procesar solo si no hay errores en search_serie
+            num_reg = df_filtered.shape[0]
+            
+            if num_reg > num_reg_max:
+                num_reg_max = num_reg
 
-        if num_reg > cant_reg:
-            list_cant_sup_reg.append(n_serie)
+            if num_reg == cant_reg:
+                print(f"\n ********************** Equipo {modulo} - {n_serie} ****************************")
+                print(df_filtered)
+
+            if num_reg > cant_reg:
+                list_cant_sup_reg.append(n_serie)
+
+        except ValueError as ve:
+            print(ve)
+        except Exception as e:
+            print(f"Error inesperado: {e}")
+
+    if cant_reg > num_reg_max:
+        raise ValueError(f"El valor de cant_reg ({cant_reg}) es mayor que el número máximo de registros ({num_reg}) para el número de serie: {n_serie}")
 
     if list_cant_sup_reg:
         str_sup_reg = ", ".join(list_cant_sup_reg)
@@ -240,10 +255,10 @@ def view_serie(df, cant_reg=0):
 def view_modulo(df, n_serie):
     df_serie = df.copy()
 
-    df_serie, modulo = search_serie(df, f"{n_serie}")
-
-    print(f"\n ********************** Equipo {modulo} - {n_serie} ****************************")
-    print(df_serie)
+    df_filtered, modulo = search_serie(df_serie, f"{n_serie}")
+    if not df_filtered.empty and modulo is not None:
+        print(f"\n ********************** Equipo {modulo} - {n_serie} ****************************")
+        print(df_filtered)
 
 def export_to_csv(df, name="output_data"):
     """
