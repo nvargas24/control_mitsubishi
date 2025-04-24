@@ -1,6 +1,9 @@
 from openpyxl import load_workbook
 from openpyxl.utils import coordinate_to_tuple
 
+import calendar
+import locale
+
 import pandas as pd
 from dotenv import load_dotenv
 import os
@@ -260,6 +263,20 @@ def view_modulo(df, n_serie):
         print(f"\n ********************** Equipo {modulo} - {n_serie} ****************************")
         print(df_filtered)
 
+def view_report_components_used_by_month(df, unidad_falla, year):
+    # Configurar el idioma a español
+    locale.setlocale(locale.LC_TIME, 'Spanish_Spain.1252') 
+
+    df_comp = df.copy()
+
+    df_comp['Año'] = pd.to_datetime(df_comp['Fecha de falla']).dt.year
+    df_comp['Mes'] = pd.to_datetime(df_comp['Fecha de falla']).dt.strftime('%b') 
+
+    df_filtered = df_comp[(df_comp['Año'] == year) & (df_comp['Unidad en falla'] == unidad_falla)]
+
+    print(df_filtered)
+
+
 def export_to_csv(df, name="output_data"):
     """
     Crea archivo csv en escritorio segun df recibido
@@ -342,6 +359,8 @@ if __name__ == "__main__":
     # Elimina columnas innecesarias
     df = df.drop(list_components_pwu + list_components_bch, axis=1)
     
+    view_report_components_used_by_month(df, "BCH", 2024)
+
     menu(df)
 
     """
