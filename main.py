@@ -272,30 +272,34 @@ def view_modulo(df, n_serie):
 def view_component_used(df):
     df_comp = df.copy()
     
-    dfs_combinations = []
+    df_summary = None  # Inicializar el DataFrame resumen
     #list_modulos = df_comp["Unidad en falla"].unique()
     list_anios = df_comp['Año'].unique()
-    modulo = "BCH"
+    modulo = "PWU"
 
     for year in list_anios:
         try:
             # Generar el DataFrame para la combinación actual
             df_result = components_used_by_month(df_comp, modulo, year)
-            print(df_result)
-            print(df_result.info())
             # Agregar la columna 'Total' con la suma de todas las columnas de meses
-            df_result[year] = df_result.sum(axis=1)
+            df_result[year] = df_result.drop(columns=['Componente']).sum(axis=1)
             # Mantener solo las columnas 'Componente' y el total del año
-            df_result = df_result[[year]]
-            df_result.reset_index(inplace=True)  # Asegurar que 'Componente' sea una columna
-            dfs_combinations.append(df_result)
+            df_result = df_result[['Componente', year]]
+            #df_result.reset_index(inplace=True)  # Asegurar que 'Componente' sea una columna
+            
+            print(df_result)
+            
+            # Combinar con el DataFrame resumen
+            if df_summary is None:
+                df_summary = df_result  # Inicializar con el primer DataFrame
+            else:
+                # Combinar basándose en la columna 'Componente'
+                df_summary = pd.merge(df_summary, df_result, on='Componente', how='outer')
+
         except Exception as e:
             print(f"Error al procesar módulo '{modulo}' y año '{year}': {e}")
 
-    # Concatenar todos los DataFrames en uno solo
-    df_summary = pd.concat(dfs_combinations, axis=0, ignore_index=True)
-
-    return df_summary   
+    return df_summary.fillna(0)   
 
 
 def components_used_by_month(df, unidad_falla, year):
@@ -418,12 +422,12 @@ if __name__ == "__main__":
     # Elimina columnas innecesarias
     df = df.drop(list_components_pwu + list_components_bch, axis=1)
     
-    #df_aux = view_component_used(df)
+    df_aux = view_component_used(df)
 
     #list_modulos = df["Unidad en falla"].unique()
     #list_anios = df['Año'].unique()
 
-    df_aux = components_used_by_month(df, "PWU", 2025)
+    #df_aux = components_used_by_month(df, "PWU", 2025)
     print(df_aux)
 
     #menu(df)
