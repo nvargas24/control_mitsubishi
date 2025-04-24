@@ -11,6 +11,9 @@ import re
 
 import questionary
 
+# Configurar el idioma a español
+locale.setlocale(locale.LC_TIME, 'Spanish_Spain.1252') 
+
 load_dotenv('urls_sarmiento.env')
 url_file_mit = os.getenv("URL_MITSUBISHI")
 url_desktop = os.getenv("URL_DESKTOP")
@@ -216,6 +219,9 @@ def enrich_dataframe(df):
     # Filtrado de Num RE de equipos
     df['Cod_Rep'] = df['UBICACIÓN ACTUAL'].apply(filter_re_code)
 
+    df['Año'] = pd.to_datetime(df['Fecha de falla']).dt.year
+    df['Mes'] = pd.to_datetime(df['Fecha de falla']).dt.strftime('%b') 
+
     return df
 
 def view_serie(df, cant_reg=0):
@@ -263,19 +269,72 @@ def view_modulo(df, n_serie):
         print(f"\n ********************** Equipo {modulo} - {n_serie} ****************************")
         print(df_filtered)
 
-def view_report_components_used_by_month(df, unidad_falla, year):
-    # Configurar el idioma a español
-    locale.setlocale(locale.LC_TIME, 'Spanish_Spain.1252') 
+def view_component_used(df):
+    df_comp = df.copy()
+    
+    dfs_combinations = []
+    #list_modulos = df_comp["Unidad en falla"].unique()
+    list_anios = df_comp['Año'].unique()
+    modulo = "BCH"
+
+    for year in list_anios:
+        try:
+            # Generar el DataFrame para la combinación actual
+            df_result = components_used_by_month(df_comp, modulo, year)
+            print(df_result)
+            print(df_result.info())
+            # Agregar la columna 'Total' con la suma de todas las columnas de meses
+            df_result[year] = df_result.sum(axis=1)
+            # Mantener solo las columnas 'Componente' y el total del año
+            df_result = df_result[[year]]
+            df_result.reset_index(inplace=True)  # Asegurar que 'Componente' sea una columna
+            dfs_combinations.append(df_result)
+        except Exception as e:
+            print(f"Error al procesar módulo '{modulo}' y año '{year}': {e}")
+
+    # Concatenar todos los DataFrames en uno solo
+    df_summary = pd.concat(dfs_combinations, axis=0, ignore_index=True)
+
+    return df_summary   
+
+
+def components_used_by_month(df, unidad_falla, year):
+    # Listado de meses
+    orden_meses = [calendar.month_abbr[i].lower() for i in range(1, 13)] 
 
     df_comp = df.copy()
 
-    df_comp['Año'] = pd.to_datetime(df_comp['Fecha de falla']).dt.year
-    df_comp['Mes'] = pd.to_datetime(df_comp['Fecha de falla']).dt.strftime('%b') 
-
     df_filtered = df_comp[(df_comp['Año'] == year) & (df_comp['Unidad en falla'] == unidad_falla)]
+    list_drop = ['N','Fecha de falla', 'Formación', 'Coche', 'Número de serie', 'ESTADO ACTUAL', 'UBICACIÓN ACTUAL', 'Unidad en falla', 'GPS', 'componentes_reemplazados', 'Cod_Rep', 'Año']
+    df_filtered = df_filtered.drop(list_drop, axis=1)
 
-    print(df_filtered)
+    if df_filtered.empty:
+        return pd.DataFrame(columns=['Componente'] + orden_meses)
 
+
+
+    # Listado de componentes para este modulo
+    componentes = [col for col in df_filtered.columns if col != "Mes"]
+    # Se crea df con columna de componetes y sus cantidades
+    df_melt = df_filtered.melt(id_vars="Mes", value_vars=componentes, var_name="Componente", value_name="Cantidad")
+    # Agrupa por Componente y Mes, debido a que aparecen varias veces por los distintos num_serie
+    df_grouped = df_melt.groupby(['Componente', 'Mes'])['Cantidad'].sum()
+    # Crea columnas de cada mes
+    df_resultado = df_grouped.unstack(fill_value=0)
+    # Asegurarte de que el índice no tenga nombre
+    df_resultado.index.name = None
+
+    # Reordenar las columnas de los meses
+    df_resultado = df_resultado.reindex(columns=orden_meses, fill_value=0)
+
+    # Restablecer el índice para que 'Componente' sea una columna
+    df_resultado = df_resultado.reset_index()
+    # Renombrar la columna 'index' a 'Componente'
+
+    df_resultado = df_resultado.rename(columns={"index": "Componente"})
+    df_resultado = df_resultado.rename_axis(None, axis=1)
+
+    return df_resultado
 
 def export_to_csv(df, name="output_data"):
     """
@@ -359,9 +418,15 @@ if __name__ == "__main__":
     # Elimina columnas innecesarias
     df = df.drop(list_components_pwu + list_components_bch, axis=1)
     
-    view_report_components_used_by_month(df, "BCH", 2024)
+    #df_aux = view_component_used(df)
 
-    menu(df)
+    #list_modulos = df["Unidad en falla"].unique()
+    #list_anios = df['Año'].unique()
+
+    df_aux = components_used_by_month(df, "PWU", 2025)
+    print(df_aux)
+
+    #menu(df)
 
     """
     # Datos relevantes a cargar por usuario
