@@ -303,13 +303,22 @@ def menu(df):
             cant_reg = questionary.text("Ingrese la cantidad mínima de registros:").ask()
             try:
                 cant_reg = int(cant_reg)
+                max_reg = df['Número de serie'].value_counts().max()
                 view_serie(df, cant_reg=cant_reg)
             except ValueError:
-                print("Por favor, ingrese un número válido.")
+                print(f"Por favor, ingrese un número válido. Máxima cantidad de registros: {max_reg}")
 
         elif opcion == "2. Filtrar por número de serie (view_modulo)":
-            # Solicitar el parámetro `n_serie` al usuario
-            n_serie = questionary.text("Ingrese el número de serie:").ask()
+            # Generar lista de números de serie únicos
+            numeros_de_serie = sorted(df['Número de serie'].unique().tolist())
+
+            # Solicitar al usuario que seleccione un número de serie
+            n_serie = questionary.select(
+                "Seleccione un número de serie:",
+                choices=numeros_de_serie
+            ).ask()
+
+            # Llamar a la función view_modulo con el número de serie seleccionado
             view_modulo(df, n_serie=n_serie)
 
         elif opcion == "3. Salir":
