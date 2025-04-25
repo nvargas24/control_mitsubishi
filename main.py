@@ -147,10 +147,10 @@ def segment_components(register):
 def used_components(register):
     # Inicializar contadores
     counts = {
-        "IGBT": 0,
-        "Diodo": 0,
-        "Resistores": 0,
-        "1N4746": 0,
+        "IGBT RM600HS-34S": 0,
+        "Diodo CM2400HCB34N": 0,
+        "Resistor 330k": 0,
+        "Diodo zener 1N4746": 0,
         "Placa de control": 0
     }
 
@@ -158,19 +158,19 @@ def used_components(register):
     component_mapping = {
         'IGB1 1': "Placa de control",
         'IGB1 2': "Placa de control",
-        'IGB1': "IGBT",
-        'IGB2': "IGBT",
-        'DB1': "Diodo",
-        'DB2': "Diodo",
+        'IGB1': "IGBT RM600HS-34S",
+        'IGB2': "IGBT RM600HS-34S",
+        'DB1': "Diodo CM2400HCB34N",
+        'DB2': "Diodo CM2400HCB34N",
         'IGD5 U': "Placa de control",
         'IGD5 V': "Placa de control",
         'IGD5 W': "Placa de control",
-        'IGU': "IGBT",
-        'IGV': "IGBT",
-        'IGW': "IGBT",
-        'IGX': "IGBT",
-        'IGY': "IGBT",
-        'IGZ': "IGBT"
+        'IGU': "IGBT RM600HS-34S",
+        'IGV': "IGBT RM600HS-34S",
+        'IGW': "IGBT RM600HS-34S",
+        'IGX': "IGBT RM600HS-34S",
+        'IGY': "IGBT RM600HS-34S",
+        'IGZ': "IGBT RM600HS-34S"
     }
 
     # Determinar lista de componentes según la unidad en falla
@@ -194,8 +194,8 @@ def used_components(register):
                 counts[category] += 1
             # Suma de componentes no especificado por encabezado
             if row=='xp' or row=='p':
-                counts["1N4746"] += 2
-                counts["Resistores"] += 1
+                counts["Diodo zener 1N4746"] += 2
+                counts["Resistor 330k"] += 1
 
     return counts
 
@@ -233,7 +233,9 @@ def view_serie(df, cant_reg=0):
     for n_serie in df_serie['Número de serie'].unique():
         try:
             df_filtered, modulo = search_serie(df_serie, f"{n_serie}")
-            
+            # ##### FILTRAR SI ES PWU O BCH  ***** en todas las lecturas
+
+            df_filtered = df_filtered.drop(['Año', 'Mes'], axis=1)
             # Procesar solo si no hay errores en search_serie
             num_reg = df_filtered.shape[0]
             
@@ -310,12 +312,12 @@ def components_used_by_month(df, unidad_falla, year):
     df_comp = df.copy()
 
     df_filtered = df_comp[(df_comp['Año'] == year) & (df_comp['Unidad en falla'] == unidad_falla)]
+
     list_drop = ['N','Fecha de falla', 'Formación', 'Coche', 'Número de serie', 'ESTADO ACTUAL', 'UBICACIÓN ACTUAL', 'Unidad en falla', 'GPS', 'componentes_reemplazados', 'Cod_Rep', 'Año']
     df_filtered = df_filtered.drop(list_drop, axis=1)
 
     if df_filtered.empty:
         return pd.DataFrame(columns=['Componente'] + orden_meses)
-
 
 
     # Listado de componentes para este modulo
