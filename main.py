@@ -316,8 +316,8 @@ def components_used_by_month(df, unidad_falla, year):
     list_drop = ['N','Fecha de falla', 'Formación', 'Coche', 'Número de serie', 'ESTADO ACTUAL', 'UBICACIÓN ACTUAL', 'Unidad en falla', 'GPS', 'componentes_reemplazados', 'Cod_Rep', 'Año']
     df_filtered = df_filtered.drop(list_drop, axis=1)
 
-    if df_filtered.empty:
-        return pd.DataFrame(columns=['Componente'] + orden_meses)
+    #if df_filtered.empty:
+    #    return pd.DataFrame(columns=['Componente'] + orden_meses)
 
 
     # Listado de componentes para este modulo
@@ -377,7 +377,7 @@ def menu(df):
             choices=[
                 "1. Filtrar por cantidad de registros (view_serie)",
                 "2. Filtrar por número de serie (view_modulo)",
-                "3. Ver componentes utilizados por módulo y año (view_component_used)",
+                "3. Ver componentes utilizados (por año o por mes)",
                 "4. Salir"
             ]
         ).ask()
@@ -405,10 +405,42 @@ def menu(df):
             # Llamar a la función view_modulo con el número de serie seleccionado
             view_modulo(df, n_serie=n_serie)
 
-        elif opcion == "3. Ver componentes utilizados por módulo y año (view_component_used)":
-            # Llamar al método view_component_used
-            print("\nGenerando resumen de componentes utilizados por módulo y año...\n")
-            view_component_used(df)
+        elif opcion == "3. Ver componentes utilizados (por año o por mes)":
+            # Submenú para elegir entre año o mes
+            sub_opcion = questionary.select(
+                "Seleccione una opción:",
+                choices=[
+                    "1. Filtrar por año",
+                    "2. Filtrar por mes",
+                    "3. Volver al menú principal"
+                ]
+            ).ask()
+
+            if sub_opcion == "1. Filtrar por año":
+                # Llamar al método view_component_used
+                print("\nGenerando resumen de componentes utilizados por año...\n")
+                view_component_used(df)
+
+            elif sub_opcion == "2. Filtrar por mes":
+                # Obtener lista de años disponibles
+                list_anios = sorted(df['Año'].unique().tolist())
+
+                # Solicitar al usuario que seleccione un año
+                year = questionary.select(
+                    "Seleccione un año:",
+                    choices=[str(anio) for anio in list_anios]
+                ).ask()
+
+                # Imprimir un mensaje con el año seleccionado
+                print(f"\nResumen de componentes utilizados por mes del año {year}.\n")
+                df_month = components_used_by_month(df, "PWU", int(year))
+                if df_month.empty:
+                    print(f"Sin registros de componentes en el año {year}")
+                else:
+                    print(df_month)
+
+            elif sub_opcion == "3. Volver al menú principal":
+                continue
 
         elif opcion == "4. Salir":
             print("Saliendo del programa...")
