@@ -272,34 +272,35 @@ def view_modulo(df, n_serie):
 def view_component_used(df):
     df_comp = df.copy()
     
-    df_summary = None  # Inicializar el DataFrame resumen
+    df_resume = None  # Inicializar el DataFrame resumen
     #list_modulos = df_comp["Unidad en falla"].unique()
     list_anios = df_comp['Año'].unique()
-    modulo = "PWU"
+    list_modulo = df_comp['Unidad en falla'].unique()
 
-    for year in list_anios:
-        try:
-            # Generar el DataFrame para la combinación actual
-            df_result = components_used_by_month(df_comp, modulo, year)
-            # Agregar la columna 'Total' con la suma de todas las columnas de meses
-            df_result[year] = df_result.drop(columns=['Componente']).sum(axis=1)
-            # Mantener solo las columnas 'Componente' y el total del año
-            df_result = df_result[['Componente', year]]
-            #df_result.reset_index(inplace=True)  # Asegurar que 'Componente' sea una columna
-            
-            print(df_result)
-            
-            # Combinar con el DataFrame resumen
-            if df_summary is None:
-                df_summary = df_result  # Inicializar con el primer DataFrame
-            else:
-                # Combinar basándose en la columna 'Componente'
-                df_summary = pd.merge(df_summary, df_result, on='Componente', how='outer')
+    for modulo in list_modulo:
+        for year in list_anios:
+            try:
+                # Generar el DataFrame para la combinación actual
+                df_result = components_used_by_month(df_comp, modulo, year)
+                # Agregar la columna 'Total' con la suma de todas las columnas de meses
+                df_result[year] = df_result.drop(columns=['Componente']).sum(axis=1)
+                # Mantener solo las columnas 'Componente' y el total del año
+                df_result = df_result[['Componente', year]]
+                
+                # Combinar con el DataFrame resumen
+                if df_resume is None:
+                    df_resume = df_result  # Inicializar con el primer DataFrame
+                else:
+                    # Combinar basándose en la columna 'Componente'
+                    df_resume = pd.merge(df_resume, df_result, on='Componente', how='outer')
 
-        except Exception as e:
-            print(f"Error al procesar módulo '{modulo}' y año '{year}': {e}")
+            except Exception as e:
+                print(f"Error al procesar módulo '{modulo}' y año '{year}': {e}")
 
-    return df_summary.fillna(0)   
+        df_resume = df_resume.fillna(0).infer_objects()   
+        print(f"\n ********************** Equipos {modulo} ****************************")
+        print(df_resume)  
+        df_resume = None
 
 
 def components_used_by_month(df, unidad_falla, year):
@@ -374,7 +375,8 @@ def menu(df):
             choices=[
                 "1. Filtrar por cantidad de registros (view_serie)",
                 "2. Filtrar por número de serie (view_modulo)",
-                "3. Salir"
+                "3. Ver componentes utilizados por módulo y año (view_component_used)",
+                "4. Salir"
             ]
         ).ask()
 
@@ -401,7 +403,12 @@ def menu(df):
             # Llamar a la función view_modulo con el número de serie seleccionado
             view_modulo(df, n_serie=n_serie)
 
-        elif opcion == "3. Salir":
+        elif opcion == "3. Ver componentes utilizados por módulo y año (view_component_used)":
+            # Llamar al método view_component_used
+            print("\nGenerando resumen de componentes utilizados por módulo y año...\n")
+            view_component_used(df)
+
+        elif opcion == "4. Salir":
             print("Saliendo del programa...")
             break
 
@@ -421,16 +428,8 @@ if __name__ == "__main__":
     df = enrich_dataframe(df)
     # Elimina columnas innecesarias
     df = df.drop(list_components_pwu + list_components_bch, axis=1)
-    
-    df_aux = view_component_used(df)
 
-    #list_modulos = df["Unidad en falla"].unique()
-    #list_anios = df['Año'].unique()
-
-    #df_aux = components_used_by_month(df, "PWU", 2025)
-    print(df_aux)
-
-    #menu(df)
+    menu(df)
 
     """
     # Datos relevantes a cargar por usuario
