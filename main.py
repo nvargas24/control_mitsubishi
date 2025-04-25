@@ -299,7 +299,9 @@ def view_component_used(df):
             except Exception as e:
                 print(f"Error al procesar módulo '{modulo}' y año '{year}': {e}")
 
-        df_resume = df_resume.fillna(0).infer_objects()   
+        df_resume = df_resume.apply(
+            lambda col: col.fillna(0).astype(int) if col.dtype in ['float64', 'int64'] else col
+        )
         print(f"\n ********************** Equipos {modulo} ****************************")
         print(df_resume)  
         df_resume = None
