@@ -21,6 +21,8 @@ url_desktop = os.getenv("URL_DESKTOP")
 list_components_bch = ['IGB1 1', 'IGB1 2', 'IGB1', 'IGB2', 'DB1', 'DB2']
 list_components_pwu = ['IGD5 U', 'IGD5 V', 'IGD5 W', 'IGU', 'IGV', 'IGW', 'IGX', 'IGY', 'IGZ']
 
+Coches_formacion =['M1-1', 'M2-1', 'M1-2', 'M2-2', 'M3', 'M4']
+
 def extract_xlsx():
     # Extraccion de URL del archivo xlsx desde un .env
     URL = os.path.join(url_file_mit, "FALLAS VVVF MITSUBISHI 20240129_V1.0.xlsx")
@@ -469,7 +471,10 @@ if __name__ == "__main__":
     # Elimina columnas innecesarias
     df = df.drop(list_components_pwu + list_components_bch, axis=1)
 
-    menu(df)
+    print(df)
+    print(df.info())
+
+    #menu(df)
 
     """
     # Datos relevantes a cargar por usuario
