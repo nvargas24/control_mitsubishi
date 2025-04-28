@@ -343,6 +343,10 @@ def components_used_by_month(df, unidad_falla, year):
     df_resultado = df_resultado.rename(columns={"index": "Componente"})
     df_resultado = df_resultado.rename_axis(None, axis=1)
 
+    # Borro componentes no utilizados en modulo
+    df_resultado = df_resultado.loc[~(df_resultado.drop(columns=['Componente']).sum(axis=1) == 0)]
+    df_resultado = df_resultado.reset_index(drop=True)
+
     return df_resultado
 
 def export_to_csv(df, name="output_data"):
