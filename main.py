@@ -21,7 +21,11 @@ url_desktop = os.getenv("URL_DESKTOP")
 list_components_bch = ['IGB1 1', 'IGB1 2', 'IGB1', 'IGB2', 'DB1', 'DB2']
 list_components_pwu = ['IGD5 U', 'IGD5 V', 'IGD5 W', 'IGU', 'IGV', 'IGW', 'IGX', 'IGY', 'IGZ']
 
-Coches_formacion =['M1-1', 'M2-1', 'M1-2', 'M2-2', 'M3', 'M4']
+list_formaciones = ['RC01', 'RC02', 'RC03', 'RC04', 'RC05', 'RC06', 'RC07', 'RC08',
+                    'RC09', 'RC10', 'RC11', 'RC12', 'RC13', 'RC14', 'RC15', 'RC16',
+                    'RC17', 'RC18', 'RC19', 'RC20', 'RC21', 'RC22', 'RC23', 'RC24', 'RC25'
+                    ]
+list_coches = ['M1-1', 'M2-1', 'M1-2', 'M2-2', 'M3', 'M4']
 
 def extract_xlsx():
     # Extraccion de URL del archivo xlsx desde un .env
@@ -228,7 +232,7 @@ def enrich_dataframe(df):
     serie_aux = df['Coche'].str.split(" ", expand=True)
     serie_aux.columns = ['Tipo coche', 'Num coche']
     # Deteccion de campos no validos y reemplazo
-    serie_aux['Tipo coche'] = serie_aux['Tipo coche'].apply(lambda x: x if x in Coches_formacion else "Sin registro")
+    serie_aux['Tipo coche'] = serie_aux['Tipo coche'].apply(lambda x: x if x in list_coches else "Sin registro")
     serie_aux = serie_aux.drop('Num coche', axis=1)
     #print(serie_aux)
     df = pd.concat([df, serie_aux], axis=1)
@@ -239,8 +243,6 @@ def enrich_dataframe(df):
     df['Formación'] = df['Formación'].apply(lambda x: str(int(x)).zfill(2) if isinstance(x, (int, float)) else x)
     df['Formación'] = df['Formación'].apply(lambda x: f'RC{x}')
     df['Formación'] = df['Formación'].apply(lambda x: 'Sin registro' if x=="RC00" else x )
-
-    print(df['Formación'].unique())
 
     return df
 
