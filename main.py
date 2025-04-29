@@ -224,6 +224,17 @@ def enrich_dataframe(df):
     df['Año'] = pd.to_datetime(df['Fecha de falla']).dt.year
     df['Mes'] = pd.to_datetime(df['Fecha de falla']).dt.strftime('%b') 
 
+    # Obtiene Tipo coche de una columna especifica
+    serie_aux = df['Coche'].str.split(" ", expand=True)
+    serie_aux.columns = ['Tipo coche', 'Num coche']
+    # Deteccion de campos no validos y reemplazo
+    serie_aux['Tipo coche'] = serie_aux['Tipo coche'].apply(lambda x: x if x in Coches_formacion else "Sin registro")
+    serie_aux = serie_aux.drop('Num coche', axis=1)
+    #print(serie_aux)
+    df = pd.concat([df, serie_aux], axis=1)
+
+    print(df['Formación'].unique())
+
     return df
 
 def view_serie(df, cant_reg=0):
