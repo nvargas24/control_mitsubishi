@@ -232,6 +232,13 @@ def enrich_dataframe(df):
     serie_aux = serie_aux.drop('Num coche', axis=1)
     #print(serie_aux)
     df = pd.concat([df, serie_aux], axis=1)
+    df = df.drop('Coche', axis=1)
+
+    # Ajuste de formato para 'Formación'
+    df['Formación'] = df['Formación'].apply(lambda x: x if isinstance(x, (int, float)) else 0)
+    df['Formación'] = df['Formación'].apply(lambda x: str(int(x)).zfill(2) if isinstance(x, (int, float)) else x)
+    df['Formación'] = df['Formación'].apply(lambda x: f'RC{x}')
+    df['Formación'] = df['Formación'].apply(lambda x: 'Sin registro' if x=="RC00" else x )
 
     print(df['Formación'].unique())
 
