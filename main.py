@@ -429,6 +429,9 @@ def resume_formacion(df_original, modulo):
             
             df_formaciones.loc[df_formaciones['Formación']==form, coche] = value
 
+    # Registro de ultima falla
+    
+
     print(df)
     print(df_formaciones)
 
