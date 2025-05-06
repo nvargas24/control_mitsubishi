@@ -372,7 +372,7 @@ def components_used_by_month(df, unidad_falla, year):
     return df_resultado
 
 
-def resume_formacion(df_original):
+def cant_rep_formacion(df_original):
     df = df_original.copy()
 
     df_grouped = df.groupby(['Formación', 'Tipo coche']).size().reset_index(name='Cantidad')
@@ -392,6 +392,38 @@ def create_empty_formacion_df():
     # Crear el DataFrame
     df = pd.DataFrame(data)
     return df
+
+def resume_formacion(df_original, modulo):
+    df = df_original.copy()
+    df_formaciones = create_empty_formacion_df()
+    dic_historial_serie = {}
+
+
+    df = df[['Fecha de falla', 'Número de serie', 'Formación', 'Tipo coche', 'Unidad en falla']]
+    df = df[df['Unidad en falla']== modulo]
+    df = df.drop('Unidad en falla', axis =1)
+
+    # Historial de equipos en formacion --- obs: antes del filtrar ordenar por fecha
+    
+    for formacion in list_formaciones:
+        aux = df.loc[df['Formación']== formacion, 'Número de serie']
+
+        str_aux = aux.str.cat(sep=", ")
+        dic_historial_serie[formacion] = str_aux
+
+    print(dic_historial_serie)
+
+    for form in list_formaciones:
+        historial_mod = dic_historial_serie[form]
+        if historial_mod:
+            df_formaciones.loc[df_formaciones['Formación']==form, 'Historial'] = historial_mod
+        else:
+            df_formaciones.loc[df_formaciones['Formación']==form, 'Historial'] = "Sin registro"
+
+    print(df)
+    print(df_formaciones)
+
+    return df_formaciones
 
 
 def export_to_csv(df, name="output_data"):
@@ -517,12 +549,7 @@ if __name__ == "__main__":
     print(df)
     print(df.info())
     
-    #df_formacion = resume_formacion(df)
-    #print(df_formacion)
-    #print(df_formacion.info())
-    
-    df_aux = create_empty_formacion_df()
-    print(df_aux)
+    resume_formacion(df, "PWU")
 
     #menu(df)
 
