@@ -371,6 +371,29 @@ def components_used_by_month(df, unidad_falla, year):
 
     return df_resultado
 
+
+def resume_formacion(df_original):
+    df = df_original.copy()
+
+    df_grouped = df.groupby(['Formación', 'Tipo coche']).size().reset_index(name='Cantidad')
+
+    return df_grouped
+
+def create_empty_formacion_df():
+    """
+    Crea un DataFrame con la columna 'Formación' y columnas adicionales para cada elemento de 'list_coches'.
+    Las filas de 'Formación' se llenan con los valores de 'list_formaciones', y las demás columnas se inicializan con None.
+    """
+    # Crear un diccionario con 'Formación' y columnas de 'list_coches'
+    data = {'Formación': list_formaciones}
+    for coche in list_coches:
+        data[coche] = [r"Sin registro"] * len(list_formaciones)  # Inicializar con None
+
+    # Crear el DataFrame
+    df = pd.DataFrame(data)
+    return df
+
+
 def export_to_csv(df, name="output_data"):
     """
     Crea archivo csv en escritorio segun df recibido
@@ -490,9 +513,16 @@ if __name__ == "__main__":
     df = enrich_dataframe(df)
     # Elimina columnas innecesarias
     df = df.drop(list_components_pwu + list_components_bch, axis=1)
-
+    
     print(df)
     print(df.info())
+    
+    #df_formacion = resume_formacion(df)
+    #print(df_formacion)
+    #print(df_formacion.info())
+    
+    df_aux = create_empty_formacion_df()
+    print(df_aux)
 
     #menu(df)
 
