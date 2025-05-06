@@ -387,7 +387,7 @@ def create_empty_formacion_df():
     # Crear un diccionario con 'Formación' y columnas de 'list_coches'
     data = {'Formación': list_formaciones}
     for coche in list_coches:
-        data[coche] = [r"Sin registro"] * len(list_formaciones)  # Inicializar con None
+        data[coche] = [r"-"] * len(list_formaciones)  # Inicializar con None
 
     # Crear el DataFrame
     df = pd.DataFrame(data)
@@ -404,14 +404,11 @@ def resume_formacion(df_original, modulo):
     df = df.drop('Unidad en falla', axis =1)
 
     # Historial de equipos en formacion --- obs: antes del filtrar ordenar por fecha
-    
     for formacion in list_formaciones:
         aux = df.loc[df['Formación']== formacion, 'Número de serie']
 
         str_aux = aux.str.cat(sep=", ")
         dic_historial_serie[formacion] = str_aux
-
-    print(dic_historial_serie)
 
     for form in list_formaciones:
         historial_mod = dic_historial_serie[form]
@@ -419,6 +416,18 @@ def resume_formacion(df_original, modulo):
             df_formaciones.loc[df_formaciones['Formación']==form, 'Historial'] = historial_mod
         else:
             df_formaciones.loc[df_formaciones['Formación']==form, 'Historial'] = "Sin registro"
+
+    # Registro de modulo actual segun coche y formacion
+    for form in list_formaciones:
+        for coche in list_coches:
+            df_filtrado = df[(df['Formación'] == form) & (df['Tipo coche'] == coche)]
+            df_filtrado = df_filtrado.sort_values(by='Fecha de falla', ascending=False)
+            if not df_filtrado.empty:
+                value = df_filtrado.iloc[0]['Número de serie']
+            else:
+                value = "-"  
+            
+            df_formaciones.loc[df_formaciones['Formación']==form, coche] = value
 
     print(df)
     print(df_formaciones)
