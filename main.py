@@ -415,22 +415,24 @@ def resume_formacion(df_original, modulo):
         if historial_mod:
             df_formaciones.loc[df_formaciones['Formación']==form, 'Historial'] = historial_mod
         else:
-            df_formaciones.loc[df_formaciones['Formación']==form, 'Historial'] = "Sin registro"
+            df_formaciones.loc[df_formaciones['Formación']==form, 'Historial'] = "-"
 
     # Registro de modulo actual segun coche y formacion
     for form in list_formaciones:
         for coche in list_coches:
             df_filtrado = df[(df['Formación'] == form) & (df['Tipo coche'] == coche)]
-            df_filtrado = df_filtrado.sort_values(by='Fecha de falla', ascending=False)
+            df_filtrado = df_filtrado.sort_values(by='Fecha de falla', ascending=False).sort_index(ascending=True)
             if not df_filtrado.empty:
                 value = df_filtrado.iloc[0]['Número de serie']
+                print("++++++++++++++++++++++++++++++++++++++")
+                print(df_filtrado)
             else:
                 value = "-"  
             
             df_formaciones.loc[df_formaciones['Formación']==form, coche] = value
 
     # Registro de ultima falla
-    
+
 
     print(df)
     print(df_formaciones)
@@ -561,7 +563,7 @@ if __name__ == "__main__":
     print(df)
     print(df.info())
     
-    resume_formacion(df, "PWU")
+    resume_formacion(df, "BCH")
 
     #menu(df)
 
