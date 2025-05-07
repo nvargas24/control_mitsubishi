@@ -328,6 +328,15 @@ def view_component_used(df):
         print(df_resume)  
         df_resume = None
 
+def view_resume_formacion(df_original):
+    df_comp = df_original.copy()
+    list_modulo = df_comp['Unidad en falla'].unique()
+
+    for modulo in list_modulo:
+        df_resume = resume_formacion(df_comp, modulo)
+        print(f"\n ********************** Equipos {modulo} ****************************")
+        print(df_resume)  
+        df_resume = None
 
 def components_used_by_month(df, unidad_falla, year):
     # Listado de meses
@@ -427,13 +436,9 @@ def resume_formacion(df_original, modulo):
 
     # Registro de ultima falla
     df_last_reg = df.groupby(['Formación'])['Fecha de falla'].max().reset_index()
-    print(df_last_reg)
     df_formaciones = df_formaciones.merge(df_last_reg, on='Formación', how='left')
     df_formaciones.rename(columns={'Fecha de falla': 'Fecha ultima falla'}, inplace=True)
-        
-    #print(df)
-    print(df_formaciones)
-
+    
     return df_formaciones
 
 
@@ -472,7 +477,8 @@ def menu(df):
                 "1. Filtrar por cantidad de registros (view_serie)",
                 "2. Filtrar por número de serie (view_modulo)",
                 "3. Ver componentes utilizados (por año o por mes)",
-                "4. Salir"
+                "4. Resumen de modulos en formaciones",
+                "5. Salir"
             ]
         ).ask()
 
@@ -535,8 +541,11 @@ def menu(df):
 
             elif sub_opcion == "3. Volver al menú principal":
                 continue
+        elif opcion == "4. Resumen de modulos en formaciones":
+            # Llamar a la función view_modulo con el número de serie seleccionado
+            view_resume_formacion(df)
 
-        elif opcion == "4. Salir":
+        elif opcion == "5. Salir":
             print("Saliendo del programa...")
             break
 
