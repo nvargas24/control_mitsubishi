@@ -402,6 +402,7 @@ def resume_formacion(df_original, modulo):
     df = df[['Fecha de falla', 'Número de serie', 'Formación', 'Tipo coche', 'Unidad en falla']]
     df = df[df['Unidad en falla']== modulo]
     df = df.drop('Unidad en falla', axis =1)
+    df = df.sort_values(by='Fecha de falla', ascending=True).sort_index(ascending=False).reset_index(drop=True)
 
     # Historial de equipos en formacion --- obs: antes del filtrar ordenar por fecha
     for formacion in list_formaciones:
@@ -421,20 +422,20 @@ def resume_formacion(df_original, modulo):
     for form in list_formaciones:
         for coche in list_coches:
             df_filtrado = df[(df['Formación'] == form) & (df['Tipo coche'] == coche)]
-            df_filtrado = df_filtrado.sort_values(by='Fecha de falla', ascending=True).sort_index(ascending=False)
             if not df_filtrado.empty:
                 value = df_filtrado.iloc[0]['Número de serie']
-                print("++++++++++++++++++++++++++++++++++++++")
-                print(df_filtrado)
             else:
                 value = "-"  
             
             df_formaciones.loc[df_formaciones['Formación']==form, coche] = value
 
     # Registro de ultima falla
-
-
-    print(df)
+    df_last_reg = df.groupby(['Formación'])['Fecha de falla'].max().reset_index()
+    print(df_last_reg)
+    df_formaciones = df_formaciones.merge(df_last_reg, on='Formación', how='left')
+    df_formaciones.rename(columns={'Fecha de falla': 'Fecha ultima falla'}, inplace=True)
+        
+    #print(df)
     print(df_formaciones)
 
     return df_formaciones
