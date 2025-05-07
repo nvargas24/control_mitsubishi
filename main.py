@@ -421,7 +421,7 @@ def resume_formacion(df_original, modulo):
     for form in list_formaciones:
         for coche in list_coches:
             df_filtrado = df[(df['Formación'] == form) & (df['Tipo coche'] == coche)]
-            df_filtrado = df_filtrado.sort_values(by='Fecha de falla', ascending=False).sort_index(ascending=True)
+            df_filtrado = df_filtrado.sort_values(by='Fecha de falla', ascending=True).sort_index(ascending=False)
             if not df_filtrado.empty:
                 value = df_filtrado.iloc[0]['Número de serie']
                 print("++++++++++++++++++++++++++++++++++++++")
