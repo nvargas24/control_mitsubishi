@@ -337,12 +337,8 @@ def components_used_by_month(df, unidad_falla, year):
 
     df_filtered = df_comp[(df_comp['Año'] == year) & (df_comp['Unidad en falla'] == unidad_falla)]
 
-    list_drop = ['N','Fecha de falla', 'Formación', 'Coche', 'Número de serie', 'ESTADO ACTUAL', 'UBICACIÓN ACTUAL', 'Unidad en falla', 'GPS', 'componentes_reemplazados', 'Cod_Rep', 'Año']
-    df_filtered = df_filtered.drop(list_drop, axis=1)
-
-    #if df_filtered.empty:
-    #    return pd.DataFrame(columns=['Componente'] + orden_meses)
-
+    list_mantener = ['IGBT RM600HS-34S', 'Diodo CM2400HCB34N', 'Resistor 330k', 'Diodo zener 1N4746', 'Placa de control', 'Mes']
+    df_filtered = df_filtered[list_mantener]
 
     # Listado de componentes para este modulo
     componentes = [col for col in df_filtered.columns if col != "Mes"]
@@ -564,9 +560,9 @@ if __name__ == "__main__":
     print(df)
     print(df.info())
     
-    resume_formacion(df, "BCH")
+    #resume_formacion(df, "BCH")
 
-    #menu(df)
+    menu(df)
 
     """
     # Datos relevantes a cargar por usuario
