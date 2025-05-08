@@ -491,7 +491,8 @@ def menu(df):
                 menu_opciones['op2'],
                 menu_opciones['op3'],
                 menu_opciones['op4'],
-                menu_opciones['op5']
+                menu_opciones['op5'],
+                menu_opciones['op6']
             ]
         ).ask()
 
@@ -537,16 +538,29 @@ def menu(df):
                 ).ask()
 
                 print(f"\nResumen de componentes utilizados por mes del año {year}.\n")
-                df_month = components_used_by_month(df, "PWU", int(year))
-                if df_month.empty:
-                    print(f"Sin registros de componentes en el año {year}")
+                df_month_pwu = components_used_by_month(df, "PWU", int(year))
+                df_month_bch = components_used_by_month(df, "BCH", int(year))
+                if df_month_pwu.empty:
+                    print(f"Sin registros de componentes de PWU en el año {year}")
                 else:
-                    print(df_month)
-
+                    print(df_month_pwu)
+                if df_month_bch.empty:
+                    print(f"Sin registros de componentes de BCH en el año {year}")
+                else:
+                    print(df_month_bch)
             elif sub_opcion == submenu_op3_opcion['op3']:
                 continue
         elif opcion == menu_opciones['op4']:
             view_resume_formacion(df)
+
+        elif opcion == menu_opciones['op5']:
+            formaciones_bch = resume_formacion(df, "BCH")
+            formaciones_pwu = resume_formacion(df, "PWU")
+            cmp_2024 = components_used_by_month(df, "BCH", 2024)
+
+            export_to_csv(formaciones_bch, "bch")
+            export_to_csv(formaciones_pwu, "pwu")
+            export_to_csv(cmp_2024, "componentes_2024")
 
         elif opcion == menu_opciones['op6']:
             print("Saliendo del programa...")
