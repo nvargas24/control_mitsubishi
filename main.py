@@ -403,7 +403,6 @@ def resume_formacion(df_original, modulo):
     df_formaciones = create_empty_formacion_df()
     dic_historial_serie = {}
 
-
     df = df[['Fecha de falla', 'Número de serie', 'Formación', 'Tipo coche', 'Unidad en falla']]
     df = df[df['Unidad en falla']== modulo]
     df = df.drop('Unidad en falla', axis =1)
@@ -469,21 +468,34 @@ def menu(df):
     """
     Menú interactivo para ejecutar funciones con parámetros solicitados al usuario.
     """
+    menu_opciones={
+        'op1':"1. Filtrar por cantidad de registros",
+        'op2':"2. Filtrar por número de serie",
+        'op3':"3. Ver componentes utilizados",
+        'op4':"4. Resumen de modulos en formaciones",
+        'op5':"5. Exportar a .CSV",
+        'op6':"6. Salir"
+    }
+
+    submenu_op3_opcion={
+        'op1':"1. Historico",
+        'op2':"2. Historico anual",
+        'op3':"3. Volver al menú principal"
+    }
+
     while True:
-        # Mostrar el menú principal
         opcion = questionary.select(
             "Selecciona una opción:",
             choices=[
-                "1. Filtrar por cantidad de registros (view_serie)",
-                "2. Filtrar por número de serie (view_modulo)",
-                "3. Ver componentes utilizados (por año o por mes)",
-                "4. Resumen de modulos en formaciones",
-                "5. Salir"
+                menu_opciones['op1'],
+                menu_opciones['op2'],
+                menu_opciones['op3'],
+                menu_opciones['op4'],
+                menu_opciones['op5']
             ]
         ).ask()
 
-        if opcion == "1. Filtrar por cantidad de registros (view_serie)":
-            # Solicitar el parámetro `cant_reg` al usuario
+        if opcion == menu_opciones['op1']:
             cant_reg = questionary.text("Ingrese la cantidad mínima de registros:").ask()
             try:
                 cant_reg = int(cant_reg)
@@ -492,46 +504,38 @@ def menu(df):
             except ValueError:
                 print(f"Por favor, ingrese un número válido. Máxima cantidad de registros: {max_reg}")
 
-        elif opcion == "2. Filtrar por número de serie (view_modulo)":
-            # Generar lista de números de serie únicos
+        elif opcion == menu_opciones['op2']:
             numeros_de_serie = sorted(df['Número de serie'].unique().tolist())
 
-            # Solicitar al usuario que seleccione un número de serie
             n_serie = questionary.select(
                 "Seleccione un número de serie:",
                 choices=numeros_de_serie
             ).ask()
 
-            # Llamar a la función view_modulo con el número de serie seleccionado
             view_modulo(df, n_serie=n_serie)
 
-        elif opcion == "3. Ver componentes utilizados (por año o por mes)":
-            # Submenú para elegir entre año o mes
+        elif opcion == menu_opciones['op3']:
             sub_opcion = questionary.select(
                 "Seleccione una opción:",
                 choices=[
-                    "1. Filtrar por año",
-                    "2. Filtrar por mes",
-                    "3. Volver al menú principal"
+                    submenu_op3_opcion['op1'],
+                    submenu_op3_opcion['op2'],
+                    submenu_op3_opcion['op3']
                 ]
             ).ask()
 
-            if sub_opcion == "1. Filtrar por año":
-                # Llamar al método view_component_used
+            if sub_opcion == submenu_op3_opcion['op1']:
                 print("\nGenerando resumen de componentes utilizados por año...\n")
                 view_component_used(df)
 
-            elif sub_opcion == "2. Filtrar por mes":
-                # Obtener lista de años disponibles
+            elif sub_opcion == submenu_op3_opcion['op2']:
                 list_anios = sorted(df['Año'].unique().tolist())
 
-                # Solicitar al usuario que seleccione un año
                 year = questionary.select(
                     "Seleccione un año:",
                     choices=[str(anio) for anio in list_anios]
                 ).ask()
 
-                # Imprimir un mensaje con el año seleccionado
                 print(f"\nResumen de componentes utilizados por mes del año {year}.\n")
                 df_month = components_used_by_month(df, "PWU", int(year))
                 if df_month.empty:
@@ -539,20 +543,17 @@ def menu(df):
                 else:
                     print(df_month)
 
-            elif sub_opcion == "3. Volver al menú principal":
+            elif sub_opcion == submenu_op3_opcion['op3']:
                 continue
-        elif opcion == "4. Resumen de modulos en formaciones":
-            # Llamar a la función view_modulo con el número de serie seleccionado
+        elif opcion == menu_opciones['op4']:
             view_resume_formacion(df)
 
-        elif opcion == "5. Salir":
+        elif opcion == menu_opciones['op6']:
             print("Saliendo del programa...")
             break
 
         else:
             print("Opción no válida. Por favor, selecciona una opción válida.")
-
-
 
 if __name__ == "__main__":
     
