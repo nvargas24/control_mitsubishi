@@ -218,15 +218,15 @@ def filter_re_code(text):
 
 def enrich_dataframe(df):
     # Componentes utilizados
-    counts_df = df.apply(used_components, axis=1, result_type="expand")
-    df = pd.concat([df, counts_df], axis=1)
+    #counts_df = df.apply(used_components, axis=1, result_type="expand")
+    #df = pd.concat([df, counts_df], axis=1)
     # Serigrafia de componentes en equipo
-    df['componentes_reemplazados'] = df.apply(segment_components, axis=1)
+    #df['componentes_reemplazados'] = df.apply(segment_components, axis=1)
     # Filtrado de Num RE de equipos
     df['Cod_Rep'] = df['UBICACIÓN ACTUAL'].apply(filter_re_code)
 
-    df['Año'] = pd.to_datetime(df['Fecha de falla']).dt.year
-    df['Mes'] = pd.to_datetime(df['Fecha de falla']).dt.strftime('%b') 
+    #df['Año'] = pd.to_datetime(df['Fecha de falla']).dt.year
+    #df['Mes'] = pd.to_datetime(df['Fecha de falla']).dt.strftime('%b') 
 
     # Obtiene Tipo coche de una columna especifica
     serie_aux = df['Coche'].str.split(" ", expand=True)
@@ -468,17 +468,69 @@ def format_df(df):
         "N": "UInt16",
         "Fecha de falla": "datetime64[ns]",
         "Formación": "string",
-        "Coche": "string",
+        "Tipo coche": "string",
         "Unidad en falla": "string",
         "Número de serie": "string",
         "ESTADO ACTUAL": "string",
         "UBICACIÓN ACTUAL": "string",
-        "GPS": "string"
+        "GPS": "string",
+        "Cod_Rep": "string"
     }
 
     df = df.astype(mapping_format_df)
 
     return df
+
+
+def mapping_state(df):
+    """
+    Reemplaza estado a su versión completa
+    """
+    mapping = {
+            "R": "Reparado",
+            "D": "Desguase",
+            "P": "Pediente",
+            "SE": "Sin evaluación",
+            "J": "Japón"
+        }
+
+    df['ESTADO ACTUAL'] = df['ESTADO ACTUAL'].replace(mapping).infer_objects(copy=False)
+        
+    return df
+
+def extract_table_modulos(df_original):
+    """
+    Extrae de df para crear tabla de modulos
+    """
+    df_aux = df_original.drop_duplicates(subset=["Número de serie"]).reset_index(drop=True)
+    df_aux = mapping_state(df_aux)
+
+    df_modulos = pd.DataFrame({
+        "id_modulo": df_aux.index,
+        "tipo": df_aux['Unidad en falla'],
+        "num_serie": df_aux['Número de serie'],
+        "estado": df_aux['ESTADO ACTUAL']
+    })
+
+    # Test df modulos
+    print("MODULOS........")
+    print(df_modulos)
+
+def extract_serie_modulos(df):
+    pass
+
+def extract_serie_coche(df):
+    pass
+
+def extract_table_register(df_original):
+    #df = df_original.copy()
+
+    df["id_falla"] = df_original['N']
+    df["id_rep"] = df_original['Cod_Rep']
+    df["id_modulo"] = extract_serie_modulos(df_original)
+    df["fecha_falla"] = df_original['Fecha de falla']
+    df["id_coche"] = extract_serie_coche(df_original)
+
 
 if __name__ == "__main__":
     
@@ -487,15 +539,21 @@ if __name__ == "__main__":
     df = strip_columns(df)  
     # Transformacion datos nulos
     df = df.fillna("Sin registro")
-    df = format_df(df)
+    # Filtrado y extraccion de datos relevantes - sin modificar
+    df = enrich_dataframe(df) 
 
-    # Filtrado y extraccion de datos relevantes
-    #df = enrich_dataframe(df)
-    # Elimina columnas innecesarias
-    df = df.drop(list_components_pwu + list_components_bch, axis=1)
-    
-    print(df)
-    print(df.info())
+    df_filter = format_df(df)
+    print(df_filter)
+    print(df_filter.info())  
+
+    df_registro_fallas = extract_table_register(df_filter)
+
+    # Elimina columnas innecesarias -- DEPENDE DF
+    #df = df.drop(list_components_pwu + list_components_bch, axis=1)
+     
+
+
+    extract_table_modulos(df_filter)
 
 
 
