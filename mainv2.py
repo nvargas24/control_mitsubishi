@@ -127,84 +127,6 @@ def filter_by_type(df, type):
 
     return df_filter
 
-def segment_components(register):
-    valores_validos = ['x', 'xp', 'p']
-    list_components = []
-    components = ""
-
-    if register["Unidad en falla"].strip() == "BCH":
-        list_components = list_components_bch
-    elif register["Unidad en falla"].strip() == "PWU":
-        list_components = list_components_pwu 
-
-    for col in df.columns:
-        row = str(register[col]).strip().lower()
-
-        if row in valores_validos and col in list_components:
-           components = components + ", "+ f"{col}" 
-
-    components = components.strip(", ")
-
-    if components:
-        return components
-    else:
-        return "Sin registro"
-
-def used_components(register):
-    # Inicializar contadores
-    counts = {
-        "IGBT RM600HS-34S": 0,
-        "Diodo CM2400HCB34N": 0,
-        "Resistor 330k": 0,
-        "Diodo zener 1N4746": 0,
-        "Placa de control": 0
-    }
-
-    # Mapear columnas a sus categorías
-    component_mapping = {
-        'IGB1 1': "Placa de control",
-        'IGB1 2': "Placa de control",
-        'IGB1': "IGBT RM600HS-34S",
-        'IGB2': "IGBT RM600HS-34S",
-        'DB1': "Diodo CM2400HCB34N",
-        'DB2': "Diodo CM2400HCB34N",
-        'IGD5 U': "Placa de control",
-        'IGD5 V': "Placa de control",
-        'IGD5 W': "Placa de control",
-        'IGU': "IGBT RM600HS-34S",
-        'IGV': "IGBT RM600HS-34S",
-        'IGW': "IGBT RM600HS-34S",
-        'IGX': "IGBT RM600HS-34S",
-        'IGY': "IGBT RM600HS-34S",
-        'IGZ': "IGBT RM600HS-34S"
-    }
-
-    # Determinar lista de componentes según la unidad en falla
-    list_components = []
-
-    if register["Unidad en falla"].strip() == "BCH":
-        list_components = list_components_bch
-
-    elif register["Unidad en falla"].strip() == "PWU":
-        list_components = list_components_pwu
-
-    # Contar componentes válidos
-    valores_validos = ['x', 'xp']
-    
-    for col in list_components:
-        row = str(register[col]).strip().lower()
-        if col in component_mapping:
-            # Suma de componentes segun encabezado
-            if row in valores_validos:
-                category = component_mapping[col]
-                counts[category] += 1
-            # Suma de componentes no especificado por encabezado
-            if row=='xp' or row=='p':
-                counts["Diodo zener 1N4746"] += 2
-                counts["Resistor 330k"] += 1
-
-    return counts
-
 def filter_re_code(text):
     """
     Filtra textos que contengan la estructura 'RE****'.
@@ -217,17 +139,7 @@ def filter_re_code(text):
         return "Sin registro"
 
 def enrich_dataframe(df):
-    # Componentes utilizados
-    #counts_df = df.apply(used_components, axis=1, result_type="expand")
-    #df = pd.concat([df, counts_df], axis=1)
-    # Serigrafia de componentes en equipo
-    #df['componentes_reemplazados'] = df.apply(segment_components, axis=1)
-    # Filtrado de Num RE de equipos
     df['Cod_Rep'] = df['UBICACIÓN ACTUAL'].apply(filter_re_code)
-
-    #df['Año'] = pd.to_datetime(df['Fecha de falla']).dt.year
-    #df['Mes'] = pd.to_datetime(df['Fecha de falla']).dt.strftime('%b') 
-
     # Obtiene Tipo coche de una columna especifica
     serie_aux = df['Coche'].str.split(" ", expand=True)
     serie_aux.columns = ['Tipo coche', 'Num coche']
@@ -337,52 +249,6 @@ def view_resume_formacion(df_original):
         print(f"\n ********************** Equipos {modulo} ****************************")
         print(df_resume)  
         df_resume = None
-
-def components_used_by_month(df, unidad_falla, year):
-    # Listado de meses
-    orden_meses = [calendar.month_abbr[i].lower() for i in range(1, 13)] 
-
-    df_comp = df.copy()
-
-    df_filtered = df_comp[(df_comp['Año'] == year) & (df_comp['Unidad en falla'] == unidad_falla)]
-
-    list_mantener = ['IGBT RM600HS-34S', 'Diodo CM2400HCB34N', 'Resistor 330k', 'Diodo zener 1N4746', 'Placa de control', 'Mes']
-    df_filtered = df_filtered[list_mantener]
-
-    # Listado de componentes para este modulo
-    componentes = [col for col in df_filtered.columns if col != "Mes"]
-    # Se crea df con columna de componetes y sus cantidades
-    df_melt = df_filtered.melt(id_vars="Mes", value_vars=componentes, var_name="Componente", value_name="Cantidad")
-    # Agrupa por Componente y Mes, debido a que aparecen varias veces por los distintos num_serie
-    df_grouped = df_melt.groupby(['Componente', 'Mes'])['Cantidad'].sum()
-    # Crea columnas de cada mes
-    df_resultado = df_grouped.unstack(fill_value=0)
-    # Asegurarte de que el índice no tenga nombre
-    df_resultado.index.name = None
-
-    # Reordenar las columnas de los meses
-    df_resultado = df_resultado.reindex(columns=orden_meses, fill_value=0)
-
-    # Restablecer el índice para que 'Componente' sea una columna
-    df_resultado = df_resultado.reset_index()
-    # Renombrar la columna 'index' a 'Componente'
-
-    df_resultado = df_resultado.rename(columns={"index": "Componente"})
-    df_resultado = df_resultado.rename_axis(None, axis=1)
-
-    # Borro componentes no utilizados en modulo
-    df_resultado = df_resultado.loc[~(df_resultado.drop(columns=['Componente']).sum(axis=1) == 0)]
-    df_resultado = df_resultado.reset_index(drop=True)
-
-    return df_resultado
-
-
-def cant_rep_formacion(df_original):
-    df = df_original.copy()
-
-    df_grouped = df.groupby(['Formación', 'Tipo coche']).size().reset_index(name='Cantidad')
-
-    return df_grouped
 
 def create_empty_formacion_df():
     """
@@ -498,39 +364,6 @@ def mapping_state(df):
         
     return df
 
-def extract_table_modulos(df_original):
-    """
-    Extrae de df para crear tabla de modulos
-    """
-    df_aux = df_original.drop_duplicates(subset=["Número de serie"]).reset_index(drop=True)
-    df_aux = mapping_state(df_aux)
-
-    df_modulos = pd.DataFrame({
-        "id_modulo": df_aux.index,
-        "tipo": df_aux['Unidad en falla'],
-        "num_serie": df_aux['Número de serie'],
-        "estado": df_aux['ESTADO ACTUAL']
-    })
-
-    # Test df modulos
-    print("MODULOS........")
-    print(df_modulos)
-
-def extract_serie_modulos(df):
-    pass
-
-def extract_serie_coche(df):
-    pass
-
-def extract_table_register(df_original):
-    #df = df_original.copy()
-
-    df["id_falla"] = df_original['N']
-    df["id_rep"] = df_original['Cod_Rep']
-    df["id_modulo"] = extract_serie_modulos(df_original)
-    df["fecha_falla"] = df_original['Fecha de falla']
-    df["id_coche"] = extract_serie_coche(df_original)
-
 
 if __name__ == "__main__":
     
@@ -541,20 +374,10 @@ if __name__ == "__main__":
     df = df.fillna("Sin registro")
     # Filtrado y extraccion de datos relevantes - sin modificar
     df = enrich_dataframe(df) 
-
     df_filter = format_df(df)
+    # Elimina columnas innecesarias -- DEPENDE DF
+    df_filter = df_filter.drop(list_components_pwu + list_components_bch, axis=1)
+
     print(df_filter)
     print(df_filter.info())  
 
-    df_registro_fallas = extract_table_register(df_filter)
-
-    # Elimina columnas innecesarias -- DEPENDE DF
-    #df = df.drop(list_components_pwu + list_components_bch, axis=1)
-     
-
-
-    extract_table_modulos(df_filter)
-
-
-
-    
